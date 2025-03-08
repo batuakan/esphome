@@ -17,7 +17,7 @@ wifi:
 captive_portal:
 
 logger:
-  level: INFO
+  level: DEBUG
 
 signalk:
   host: 192.168.0.3
@@ -37,4 +37,14 @@ sensor:
       - logger.log:
           format: "Wind speed %.1f"
           args: ['x']
+          level: INFO
+
+text_sensor:
+  - platform: signalk
+    id: propulsion_p1_state
+    path: propulsion.p1.state
+    on_value:
+      - logger.log:
+          format: "Propulsion state %s"
+          args: ['x.c_str()']
           level: INFO

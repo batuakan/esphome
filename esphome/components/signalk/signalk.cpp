@@ -28,7 +28,12 @@ void SignalK::setup() {
       }
       auto path = delta["path"].as<std::string>();
       auto sensor = sensors_[path];
-      sensor->on_delta_received(delta["value"].as<double>());
+      if (delta["value"].is<double>()) {
+        sensor->on_delta_received(delta["value"].as<double>());
+      } else if (delta["value"].is<std::string>()) {
+        ESP_LOGD(TAG, "Received string");
+        sensor->on_delta_received(delta["value"].as<std::string>());
+      }
     }
   });
 
@@ -44,6 +49,15 @@ void SignalK::setup() {
       ESP_LOGD(TAG, "Got a Pong!");
     }
   });
+
+  connect();
+}
+
+void SignalK::update() { webSocketClient_.poll(); }
+
+void SignalK::dump_config() {}
+
+void SignalK::connect() {
   webSocketClient_.connect(host_.c_str(), port_, "/signalk/v1/stream?subscribe=none");
   JsonDocument doc;
   doc["context"] = "vessels.self";
@@ -63,8 +77,5 @@ void SignalK::setup() {
   webSocketClient_.send(output);
 }
 
-void SignalK::update() { webSocketClient_.poll(); }
-
-void SignalK::dump_config() {}
 }  // namespace signalk
 }  // namespace esphome
