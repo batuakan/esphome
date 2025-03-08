@@ -6,6 +6,8 @@
 
 #include <ArduinoWebsockets.h>
 #include "sensor/signalk_sensor.h"
+#include "text_sensor/signalk_text_sensor.h"
+#include "signalk_sensor_base.h"
 
 namespace esphome {
 namespace signalk {
@@ -18,14 +20,16 @@ class SignalK : public PollingComponent {
 
   void set_host(std::string host) { host_ = host; }
   void set_port(unsigned short port) { port_ = port; }
-  void subscribe(SignalkSensor *sensor) {
-    sensors_.insert(std::pair<std::string, SignalkSensor *>(sensor->get_path(), sensor));
+  void subscribe(SignalkSensorBase *sensor) {
+    sensors_.insert(std::pair<std::string, SignalkSensorBase *>(sensor->get_path(), sensor));
   }
 
  protected:
+  void connect();
+
   std::string host_;
   unsigned short port_;
-  std::map<std::string, SignalkSensor *> sensors_;
+  std::map<std::string, SignalkSensorBase *> sensors_;
   websockets::WebsocketsClient webSocketClient_;
 };
 
