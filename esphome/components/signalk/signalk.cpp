@@ -15,7 +15,8 @@ void SignalK::setup() {
   ESP_LOGD(TAG, "Setup");
   // run callback when messages are received
   webSocketClient_.onMessage([&](WebsocketsMessage message) {
-    ESP_LOGD(TAG, "Got Message: ");
+    ESP_LOGD(TAG, "Got Message: %s", message.data().c_str());
+
     JsonDocument doc;
     deserializeJson(doc, message.data());
     JsonArray arr = doc["updates"][0]["values"].as<JsonArray>();
@@ -31,7 +32,6 @@ void SignalK::setup() {
       if (delta["value"].is<double>()) {
         sensor->on_delta_received(delta["value"].as<double>());
       } else if (delta["value"].is<std::string>()) {
-        ESP_LOGD(TAG, "Received string");
         sensor->on_delta_received(delta["value"].as<std::string>());
       }
     }
