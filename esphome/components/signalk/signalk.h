@@ -27,6 +27,10 @@ class SignalK : public PollingComponent {
  protected:
   void connect();
 
+  unsigned long last_millis;
+  unsigned long elapsed_duration;
+  bool connected;
+
   std::string host_;
   unsigned short port_;
   std::map<std::string, SignalkSensorBase *> sensors_;

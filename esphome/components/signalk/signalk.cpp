@@ -43,6 +43,8 @@ void SignalK::setup() {
       ESP_LOGD(TAG, "Connnection Opened");
     } else if (event == WebsocketsEvent::ConnectionClosed) {
       ESP_LOGD(TAG, "Connnection Closed");
+      connected = false;
+      last_millis = millis();
     } else if (event == WebsocketsEvent::GotPing) {
       ESP_LOGD(TAG, "Got a Ping!");
     } else if (event == WebsocketsEvent::GotPong) {
@@ -53,12 +55,30 @@ void SignalK::setup() {
   connect();
 }
 
-void SignalK::update() { webSocketClient_.poll(); }
+void SignalK::update() {
+  if (!connected) {
+    // TODO: Handle millis() overflow properly
+    unsigned long now = millis();
+    elapsed_duration += now - last_millis;
+    last_millis = now;
+    if (elapsed_duration > 5000) {
+      connect();
+    }
+  } else {
+    webSocketClient_.poll();
+  }
+}
 
 void SignalK::dump_config() {}
 
 void SignalK::connect() {
-  webSocketClient_.connect(host_.c_str(), port_, "/signalk/v1/stream?subscribe=none");
+  elapsed_duration = 0;
+  ESP_LOGD(TAG, "Attemping to connect to signalk server");
+  connected = webSocketClient_.connect(host_.c_str(), port_, "/signalk/v1/stream?subscribe=none");
+  if (!connected) {
+    ESP_LOGW(TAG, "Connection attemp failed!");
+    return;
+  }
   JsonDocument doc;
   doc["context"] = "vessels.self";
   JsonArray subscribe = doc["subscribe"].to<JsonArray>();
