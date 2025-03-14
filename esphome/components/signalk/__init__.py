@@ -26,12 +26,7 @@ async def to_code(config):
     cg.add(var.set_port(config[CONF_PORT]))
 
     cg.add(var.set_setup_priority(100))
+    cg.add_library("WiFiClientSecure", None)
+    cg.add_library("HTTPClient", None)
     cg.add_library("gilmaimon/ArduinoWebsockets", "0.5.4")
     cg.add_library("bblanchon/ArduinoJson", "7.3.1")
-    cg.add_build_flag(
-        "-I/home/batu/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src/"
-    )
-    cg.add_build_flag(
-        "-I/home/batu/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src/"
-    )
-    cg.add_platformio_option("lib_compat_mode", "off")
