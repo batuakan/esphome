@@ -43,8 +43,10 @@ void SignalK::setup() {
   ESP_LOGD(TAG, "Setup");
 #ifdef USE_ESP32_FRAMEWORK_ARDUINO
   // run callback when messages are received
-  webSocketClient_.onMessage(
-      [&](WebsocketsMessage message) { ESP_LOGD(TAG, "Got Message: %s", message.data().c_str()); });
+  webSocketClient_.onMessage([&](WebsocketsMessage message) {
+    ESP_LOGD(TAG, "Got Message: %s", message.data().c_str());
+    on_receive_delta((uint8_t *) message.data().c_str(), message.data().length());
+  });
 
   // run callback when events are occuring
   webSocketClient_.onEvent([&](WebsocketsEvent event, String data) {
@@ -90,6 +92,9 @@ void SignalK::update() {
     webSocketClient_.poll();
   }
 #endif
+  for (auto it = sensors_.begin(); it != sensors_.end(); ++it) {
+    it->second->update();
+  }
 }
 
 void SignalK::dump_config() {}
@@ -143,13 +148,13 @@ void SignalK::on_receive_delta(uint8_t *payload, size_t length) {
     auto path = delta["path"].as<std::string>();
     auto sensor = sensors_[path];
     if (delta["value"].is<double>()) {
-      sensor->on_delta_received(delta["value"].as<double>());
+      sensor->set_value(delta["value"].as<double>());
     } else if (delta["value"].is<std::string>()) {
-      sensor->on_delta_received(delta["value"].as<std::string>());
+      sensor->set_value(delta["value"].as<std::string>());
     } else if (delta["value"].is<JsonArray>() || delta["value"].is<JsonObject>()) {
       std::string output;
       serializeJson(delta["value"], output);
-      sensor->on_delta_received(output);
+      sensor->set_value(output);
     }
   }
 }
