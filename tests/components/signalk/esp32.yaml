@@ -1,14 +1,11 @@
 esphome:
-  name: signalk_example
+  name: signalk
   friendly_name: SignalK Example
 
 esp32:
   board: esp32dev
   framework:
     type: arduino
-
-# ota:
-#   - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
@@ -18,6 +15,8 @@ captive_portal:
 
 logger:
   level: DEBUG
+
+json:
 
 signalk:
   host: 192.168.0.3
@@ -31,6 +30,7 @@ sensor:
     # format: "delta"
     # policy: "instant"
     # minperiod: 200
+    unit: "knots"
 
     accuracy_decimals: 2
     on_value:
@@ -41,10 +41,14 @@ sensor:
 
 text_sensor:
   - platform: signalk
-    id: propulsion_p1_state
-    path: propulsion.p1.state
+    id: navigation_position
+    path: navigation.position
     on_value:
-      - logger.log:
-          format: "Propulsion state %s"
-          args: ['x.c_str()']
-          level: INFO
+      - lambda: |-
+            json::parse_json(x, [](JsonObject root) -> bool {
+                if (root["longitude"]) {
+                    ESP_LOGI("json_parser", "Longitude: %f", root["longitude"].as<float>());
+                    ESP_LOGI("json_parser", "Latitude: %f", root["latitude"].as<float>());
+                }
+                return true;
+            });
