@@ -24,9 +24,9 @@ UNIT = {
     "degrees": Unit.UNIT_DEGREES,
     "gradians": Unit.UNIT_GRADIANS,
     # Angular velocity
-    "radians per second": Unit.UNIT_RADIANS_PER_SECOND,
-    "degrees per second": Unit.UNIT_DEGREES_PER_SECOND,
-    "degrees per minute": Unit.UNIT_DEGREES_PER_MINUTE,
+    "radians_per_second": Unit.UNIT_RADIANS_PER_SECOND,
+    "degrees_per_second": Unit.UNIT_DEGREES_PER_SECOND,
+    "degrees_per_minute": Unit.UNIT_DEGREES_PER_MINUTE,
     # Charge
     "coulumb": Unit.UNIT_COULUMB,
     "ampere_hours": Unit.UNIT_AMPERE_HOURS,
