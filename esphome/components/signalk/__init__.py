@@ -26,7 +26,7 @@ signalk_ns = cg.esphome_ns.namespace("signalk")
 if CORE.is_esp32 and CORE.using_esp_idf:
     signalk = signalk_ns.class_("SignalKEspIdf", cg.PollingComponent)
 elif CORE.is_esp32 and CORE.using_arduino:
-    signalk = signalk_ns.class_("SignalKEspArduino", cg.PollingComponent)
+    signalk = signalk_ns.class_("SignalKArduino", cg.PollingComponent)
 elif CORE.is_host:
     signalk = signalk_ns.class_("SignalKx86", cg.PollingComponent)
 else:

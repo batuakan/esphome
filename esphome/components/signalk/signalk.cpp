@@ -21,11 +21,12 @@ void SignalK::setup() {
   if (!this->user_name_.empty() && !this->user_password_.empty()) {
     prefered_access_method_ = SignalKPreferedAccessMethod::LOGIN;
     ESP_LOGD(TAG, "Using LOGIN as prefered access method");
-  } else if (!token_.empty()) {
-    prefered_access_method_ = SignalKPreferedAccessMethod::REQUEST_ACCESS;
-    ESP_LOGD(TAG, "Using REQUEST_ACCESS as prefered access method");
-  } else {
-    ESP_LOGW(TAG, "No authentication method available, please set either username/password or token");
+  }
+  ESP_LOGD(TAG, "Using REQUEST_ACCESS as prefered access method");
+  prefered_access_method_ = SignalKPreferedAccessMethod::REQUEST_ACCESS;
+
+  if (!token_.empty()) {
+    request_access_state_ = SignalKRequestAccessState::HASTOKEN;
   }
 }
 
@@ -203,15 +204,17 @@ void SignalK::validate_token() {
   last_validation_attempt = now;
 
   auto response = get("/signalk/v1/stream");
-  ESP_LOGD(TAG, "Token validation response: %s", response.body.c_str());
+  ESP_LOGD(TAG, "Token validation response:  %d %s", response.status_code, response.body.c_str());
   if (response.status_code == 426) {
     request_access_state_ = SignalKRequestAccessState::COMPLETED;
     ESP_LOGI(TAG, "Token validation successful");
-  } else {
+  } else if (response.status_code == 401) {
     token_.clear();
     save_token();
     request_access_state_ = SignalKRequestAccessState::UNKNOWN;
     ESP_LOGE(TAG, "Token validation failed: HTTP %d", response.status_code);
+  } else {
+    ESP_LOGW(TAG, "Unexpected response during token validation: HTTP %d", response.status_code);
   }
 }
 
@@ -219,7 +222,7 @@ void SignalK::save_token() {
   constexpr size_t TOKEN_MAX_LENGTH = 256;
   char token_buffer[TOKEN_MAX_LENGTH] = {0};
   uint32_t hash = fnv1_hash("signalk" + this->host_);
-  auto pref = global_preferences->make_preference<char[TOKEN_MAX_LENGTH]>(hash, true);
+  auto pref = global_preferences->make_preference<char[TOKEN_MAX_LENGTH]>(10000, true);
   memcpy(token_buffer, token_.c_str(), std::min(token_.size(), sizeof(token_buffer) - 1));
   if (pref.save(&token_buffer)) {
     ESP_LOGI(TAG, "Saved token to preferences: %s", token_.c_str());
@@ -232,7 +235,7 @@ void SignalK::load_token() {
   constexpr size_t TOKEN_MAX_LENGTH = 256;
   char token_buffer[TOKEN_MAX_LENGTH] = {0};
   uint32_t hash = fnv1_hash("signalk" + this->host_);
-  auto pref = global_preferences->make_preference<char[TOKEN_MAX_LENGTH]>(hash, true);
+  auto pref = global_preferences->make_preference<char[TOKEN_MAX_LENGTH]>(10000, true);
   if (pref.load(&token_buffer)) {
     token_ = std::string(token_buffer);
     if (!token_.empty()) {

@@ -105,13 +105,13 @@ bool SignalKEspIdf::connect(const std::string &path) {
   };
 
   // Set Authorization header if token is present
-  // if (!token_.empty()) {
-  //   std::string header = "Authorization: Bearer " + token_ + "\r\n";
-  //   websocket_cfg.headers = header.c_str();
-  //   // Note: websocket_cfg.headers is only available in ESP-IDF v4.1+.
-  //   // If using an older version, you may need to upgrade or patch the IDF.
-  //   // Also, ensure that auth_token_ is a member variable containing the token.
-  // }
+  if (!token_.empty()) {
+    // Note: websocket_cfg.headers is only available in ESP-IDF v4.1+.
+    // If using an older version, you may need to upgrade or patch the IDF.
+    // Also, ensure that auth_token_ is a member variable containing the token.
+    auth_header_ = "Authorization: Bearer " + token_ + "\r\n";
+    websocket_cfg.headers = auth_header_.c_str();
+  }
 
   websocket_client = esp_websocket_client_init(&websocket_cfg);
 
@@ -199,19 +199,20 @@ HttpResponse SignalKEspIdf::get(const std::string &path) {
   };
 
   esp_http_client_handle_t client = esp_http_client_init(&config);
-  // if (auth.empty()) {
-  //   ESP_LOGW(TAG, "No authorization token provided");
-  // } else {
-  //   esp_http_client_set_header(client, "Authorization", auth.c_str());
-  // }
+  if (token_.empty()) {
+    ESP_LOGW(TAG, "No authorization token provided");
+  } else {
+    auth_header_ = "Bearer " + token_ + "\r\n";
+    esp_http_client_set_header(client, "Authorization", auth_header_.c_str());
+  }
   esp_err_t err = esp_http_client_perform(client);
 
   HttpResponse resp;
   resp.status_code = esp_http_client_get_status_code(client);
   // this->content_length = esp_http_client_get_content_length(client);
 
-  // ESP_LOGI(TAG, "GET Status = %d, content_length = %d", status, this->content_length);
-  // ESP_LOGI(TAG, "GET Response = %s", responseBuffer);
+  // ESP_LOGD(TAG, "GET Status = %d, content_length = %d", status, this->content_length);
+  // ESP_LOGD(TAG, "GET Response = %s", responseBuffer);
   esp_http_client_cleanup(client);
   resp.body = std::string(responseBuffer);
   return resp;

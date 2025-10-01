@@ -49,6 +49,22 @@ inline std::string get_uuid() { return "12345678-1234-1232-123456789012"; }
 #ifdef USE_ESP32_FRAMEWORK_ARDUINO
 #include <Arduino.h>
 inline uint32_t sk_millis() { return millis(); }
+
+inline std::string get_uuid() {
+  uint64_t mac = ESP.getEfuseMac();  // 48-bit unique chip ID (MAC)
+
+  // Split into parts for UUID-like formatting
+  char uuid[37];
+  snprintf(uuid, sizeof(uuid), "%08lx-%04lx-%04lx-%04x-%012llx",
+           (unsigned long) (mac >> 16),             // high 32 bits
+           (unsigned long) ((mac >> 0) & 0xFFFF),   // next 16
+           (unsigned long) ((mac >> 32) & 0xFFFF),  // next 16 (different shuffle, adjust as needed)
+           0x0ba2,                                  // fixed chunk like in your code
+           (unsigned long long) mac                 // low 48 bits as node identifier
+  );
+
+  return std::string(uuid);
+}
 #endif
 
 #ifdef USE_ESP_IDF
